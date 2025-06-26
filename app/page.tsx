@@ -517,15 +517,6 @@ function Header({ searchTerm, setSearchTerm }) {
               )}
             </button>
           </motion.div>
-          
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <button className="w-8 h-8 bg-red-600 rounded-full hover:bg-red-700 p-0 flex items-center justify-center">
-              <div className="text-white"><UserIcon /></div>
-            </button>
-          </motion.div>
         </div>
       </div>
     </header>
@@ -549,8 +540,6 @@ function Sidebar({
   const navItems = [
     { icon: HomeIcon, label: 'Home' },
     { icon: CompassIcon, label: 'Explore' },
-    { icon: PlusIcon, label: 'Create' },
-    { icon: HeartIcon, label: 'Saved' },
     { icon: BookmarkIcon, label: 'Boards' },
   ];
 
@@ -761,59 +750,57 @@ export default function Page() {
   return (
     <ThemeProvider>
       <>
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          html[data-theme='dark'] {
-            color-scheme: dark;
-          }
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            html[data-theme='dark'] {
+              color-scheme: dark;
+            }
 
-          html[data-theme='light'] {
-            color-scheme: light;
-          }
+            html[data-theme='light'] {
+              color-scheme: light;
+            }
 
-          html {
-            scroll-behavior: smooth;
-          }
+            html {
+              scroll-behavior: smooth;
+            }
 
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-          }
+            .line-clamp-2 {
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+            }
 
-          .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-          }
+            .backdrop-blur-xl {
+              backdrop-filter: blur(24px);
+              -webkit-backdrop-filter: blur(24px);
+            }
 
-          .backdrop-blur-xl {
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-          }
+            ::-webkit-scrollbar {
+              width: 6px;
+            }
 
-          ::-webkit-scrollbar {
-            width: 6px;
-          }
+            ::-webkit-scrollbar-track {
+              background: rgba(0, 0, 0, 0.1);
+            }
 
-          ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-          }
+            ::-webkit-scrollbar-thumb {
+              background: rgba(0, 0, 0, 0.3);
+              border-radius: 3px;
+            }
 
-          ::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 3px;
-          }
+            ::-webkit-scrollbar-thumb:hover {
+              background: rgba(0, 0, 0, 0.5);
+            }
 
-          ::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 0, 0, 0.5);
-          }
-
-          img {
-            transition: opacity 0.3s ease;
-          }
-        `
-      }} />
-        <PinstaApp />
+            img {
+              transition: opacity 0.3s ease;
+            }
+          `
+        }} />
+        <div style={{ fontFamily: '"Inter", sans-serif' }}>
+          <PinstaApp />
+        </div>
       </>
     </ThemeProvider>
   );
