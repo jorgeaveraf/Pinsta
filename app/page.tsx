@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, createContext, useContext } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 // Theme Context
 type Theme = 'light' | 'dark';
@@ -264,11 +264,10 @@ function MasonryGrid({ children, className = '' }: { children: React.ReactNode[]
 }
 
 // Pin Card Component
-function PinCard({ pin, savedPins, onToggleSave }: { pin: any; savedPins: number[]; onToggleSave: (pinId: number) => void }) {
+function PinCard({ pin, savedPins, onToggleSave, showToast }: { pin: any; savedPins: number[]; onToggleSave: (pinId: number) => void; showToast: (msg: string, type?: 'success' | 'error') => void; }) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const { showToast } = useToast();
 
   const isSaved = savedPins.includes(pin.id);
 
@@ -277,20 +276,33 @@ function PinCard({ pin, savedPins, onToggleSave }: { pin: any; savedPins: number
   };
 
   const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
+    const url = `${window.location.origin}/pin/${pin.id}`;
+    navigator.clipboard.writeText(url);
     showToast('Link copied to clipboard');
+    setShowDropdown(false);
   };
 
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = pin.imageUrl;
-    link.download = `${pin.title}.jpg`;
-    link.target = '_blank';
-    link.click();
-    showToast('Download started');
-  };
+  const handleDownload = async () => {
+    setShowDropdown(false);
+    try {
+      const response = await fetch(pin.imageUrl, { mode: 'cors' });
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+  
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${pin.title}.jpg`;
+      a.click();
+  
+      window.URL.revokeObjectURL(url);
+      showToast('Download started');
+    } catch (error) {
+      showToast('Download failed', 'error');
+    }
+  };  
 
   const handleView = () => {
+    setShowDropdown(false);
     window.open(pin.imageUrl, '_blank');
   };
 
@@ -445,7 +457,7 @@ function PinCard({ pin, savedPins, onToggleSave }: { pin: any; savedPins: number
 }
 
 // Header Component
-function Header() {
+function Header({ searchTerm, setSearchTerm }) {
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -461,28 +473,32 @@ function Header() {
           </span>
         </div>
         
-       {/* Search Bar */}
-      <div className="flex-1 max-w-2xl mx-8">
-        <div className="relative">
-          <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
-            <SearchIcon />
+        {/* Search Bar */}
+        <div className="flex-1 max-w-2xl mx-8">
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
+              <SearchIcon />
+            </div>
+
+            {/* Desktop input */}
+            <input
+              type="text"
+              placeholder="Search for ideas..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="hidden md:block w-full h-12 pl-12 pr-4 bg-gray-100 dark:bg-gray-900 border-none rounded-full text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-white-600 focus:outline-none"
+            />
+
+            {/* Mobile input */}
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block md:hidden w-full h-12 pl-12 pr-4 bg-gray-100 dark:bg-gray-900 border-none rounded-full text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-white-600 focus:outline-none"
+            />
           </div>
-
-          {/* Input for desktop */}
-          <input
-            type="text"
-            placeholder="Search for ideas..."
-            className="hidden md:block w-full h-12 pl-12 pr-4 bg-gray-100 dark:bg-gray-900 border-none rounded-full text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-red-600 focus:outline-none"
-          />
-
-          {/* Input for mobile */}
-          <input
-            type="text"
-            placeholder="Search"
-            className="block md:hidden w-full h-12 pl-12 pr-4 bg-gray-100 dark:bg-gray-900 border-none rounded-full text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-red-600 focus:outline-none"
-          />
         </div>
-      </div>
         
         {/* Actions */}
         <div className="flex items-center space-x-4">
@@ -517,41 +533,104 @@ function Header() {
 }
 
 // Sidebar Component
-function Sidebar() {
-  const [activeItem, setActiveItem] = useState(0);
+function Sidebar({
+  setView,
+  setSelectedCategory,
+  view
+}: {
+  setView: (view: "home" | "explore" | "boards") => void;
+  setSelectedCategory: (cat: string | null) => void;
+  view: "home" | "explore" | "boards";
+})
+ {
+  const [showExploreMenu, setShowExploreMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const navItems = [
-    { icon: HomeIcon, label: 'Home', active: true },
-    { icon: CompassIcon, label: 'Explore', active: false },
-    { icon: PlusIcon, label: 'Create', active: false },
-    { icon: HeartIcon, label: 'Saved', active: false },
-    { icon: BookmarkIcon, label: 'Boards', active: false },
+    { icon: HomeIcon, label: 'Home' },
+    { icon: CompassIcon, label: 'Explore' },
+    { icon: PlusIcon, label: 'Create' },
+    { icon: HeartIcon, label: 'Saved' },
+    { icon: BookmarkIcon, label: 'Boards' },
   ];
+
+  const categories = [...new Set(mockPins.map(pin => pin.category))];
+
+  // Cierra el dropdown si se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowExploreMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <aside className="fixed left-0 top-16 bottom-0 w-16 lg:w-20 bg-white/90 dark:bg-black/90 backdrop-blur-xl border-r border-gray-200 dark:border-gray-800 z-40">
       <nav className="h-full flex flex-col items-center py-8 space-y-6">
-        {navItems.map((item, index) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = index === activeItem;
-          
+          const isExplore = item.label === 'Explore';
+          const isHome = item.label === 'Home';
+          const isBoards = item.label === 'Boards';
+          const isActive = (isHome && view === 'home') || 
+                          (isExplore && view === 'explore') || 
+                          (isBoards && view === 'boards');
+
+          const handleClick = () => {
+            if (isHome) {
+              setView("home");
+              setSelectedCategory(null);
+              setShowExploreMenu(false);
+            }
+            if (isExplore) {
+              setShowExploreMenu(prev => !prev);
+            }
+            if (isBoards) {
+              setView("boards");
+              setSelectedCategory(null);
+              setShowExploreMenu(false);
+            }
+          };
+
           return (
-            <motion.div
-              key={item.label}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <button
-                onClick={() => setActiveItem(index)}
-                className={`w-10 h-10 rounded-full p-0 transition-all duration-200 flex items-center justify-center ${
-                  isActive
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
-                }`}
-              >
-                <Icon />
-              </button>
-            </motion.div>
+            <div key={item.label} className="relative" ref={isExplore ? menuRef : null}>
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                <button
+                  onClick={handleClick}
+                  className={`w-10 h-10 rounded-full p-0 transition-all duration-200 flex items-center justify-center ${
+                    isActive
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  <Icon />
+                </button>
+              </motion.div>
+
+              {/* Dropdown menu (solo para Explore) */}
+              {isExplore && showExploreMenu && (
+                <div
+                  className="absolute left-12 top-1/2 transform -translate-y-1/2 z-50 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-2 px-4 space-y-1"
+                >
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => {
+                        setView("explore");
+                        setSelectedCategory(category);
+                        setShowExploreMenu(false);
+                      }}
+                      className="w-full text-left px-2 py-1 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>
@@ -562,7 +641,26 @@ function Sidebar() {
 // Main Pinsta Component
 function PinstaApp() {
   const [savedPins, setSavedPins] = useState<number[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast, showToast } = useToast();
+
+  const [view, setView] = useState<"home" | "explore" | "boards">("home");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const filteredPins = mockPins.filter((pin) => {
+    const matchesSearch = pin.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          pin.category.toLowerCase().includes(searchTerm.toLowerCase());
+  
+    const matchesCategory = view === 'explore'
+      ? !selectedCategory || pin.category === selectedCategory
+      : true;
+  
+    const matchesBoards = view === 'boards'
+      ? savedPins.includes(pin.id)
+      : true;
+  
+    return matchesSearch && matchesCategory && matchesBoards;
+  });  
 
   const handleToggleSave = (pinId: number) => {
     setSavedPins(prev => {
@@ -579,21 +677,42 @@ function PinstaApp() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
-      <Header />
-      <Sidebar />
-      
+      <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      <Sidebar setView={setView} setSelectedCategory={setSelectedCategory} view={view} />
+
       <main className="ml-16 lg:ml-20 pt-16">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <MasonryGrid>
-            {mockPins.map((pin) => (
-              <PinCard 
-                key={pin.id} 
-                pin={pin} 
-                savedPins={savedPins}
-                onToggleSave={handleToggleSave}
-              />
-            ))}
-          </MasonryGrid>
+
+        {view === 'explore' && (
+          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-6">
+            Explore: {selectedCategory || 'All Categories'}
+          </h2>
+        )}
+
+        {view === 'boards' && (
+          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-6">
+            Your Boards
+          </h2>
+        )}
+
+          {filteredPins.length > 0 ? (
+            <MasonryGrid>
+              {filteredPins.map((pin) => (
+                <PinCard 
+                  key={pin.id} 
+                  pin={pin} 
+                  savedPins={savedPins}
+                  onToggleSave={handleToggleSave}
+                  showToast={showToast}
+                />
+              ))}
+            </MasonryGrid>
+          ) : (
+            <div className="text-center py-24 text-gray-500 dark:text-gray-400 text-lg">
+              No ideas found matching your search.<br />
+              Try something like <span className="italic text-red-500">"Home Decor"</span> or <span className="italic text-red-500">"Sushi"</span>.
+            </div>
+          )}
         </div>
       </main>
 
@@ -628,7 +747,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('theme', newTheme);
   };
 
-  if (!theme) return null; // ⛔ wait until hydration
+  if (!theme) return null; // wait until hydration
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
