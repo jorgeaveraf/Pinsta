@@ -22,6 +22,19 @@ function useTheme() {
 }
 
 // Icon Components
+const LeafIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 256 256"
+    fill="currentColor"
+    className="text-white dark:text-white"
+  >
+    <path d="M223.45,40.07a8,8,0,0,0-7.52-7.52C139.8,28.08,78.82,51,52.82,94a87.09,87.09,0,0,0-12.76,49c.57,15.92,5.21,32,13.79,47.85l-19.51,19.5a8,8,0,0,0,11.32,11.32l19.5-19.51C81,210.73,97.09,215.37,113,215.94q1.67.06,3.33.06A86.93,86.93,0,0,0,162,203.18C205,177.18,227.93,116.21,223.45,40.07ZM153.75,189.5c-22.75,13.78-49.68,14-76.71.77l88.63-88.62a8,8,0,0,0-11.32-11.32L65.73,179c-13.19-27-13-54,.77-76.71,22.09-36.47,74.6-56.44,141.31-54.06C210.2,114.89,190.22,167.41,153.75,189.5Z"/>
+  </svg>
+);
+
 const SearchIcon = () => (
   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -47,8 +60,12 @@ const HomeIcon = () => (
 );
 
 const CompassIcon = () => (
-  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9m0 9a9 9 0 01-9-9m9 9c0 5-4 9-9 9s-9-4-9-9m9 9c0-5-4-9-9-9s-9 4-9 9" />
+  <svg
+    className="h-5 w-5"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm2.93 7.07l-1.41 4.24-4.24 1.41 1.41-4.24 4.24-1.41z" />
   </svg>
 );
 
@@ -135,7 +152,7 @@ const mockPins = [
   { id: 24, title: 'Maldives Beach Resort', imageUrl: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=600', category: 'Travel', width: 400, height: 600 },
   { id: 25, title: 'Tokyo Street Culture', imageUrl: 'https://images.unsplash.com/photo-1502780402662-acc01917949e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=500', category: 'Travel', width: 400, height: 500 },
   { id: 26, title: 'Swiss Alps Adventure', imageUrl: 'https://images.unsplash.com/photo-1458906931852-47d88574a008?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=600', category: 'Travel', width: 400, height: 600 },
-  { id: 27, title: 'New York City Skyline', imageUrl: 'https://images.unsplash.com/photo-1501436513145-30f24e19fcc4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=550', category: 'Travel', width: 400, height: 550 },
+  { id: 27, title: 'New York City Skyline', imageUrl: 'https://images.unsplash.com/photo-1529260830199-42c24126f198?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=500', category: 'Travel', width: 400, height: 550 },
   { id: 28, title: 'Bali Temple Architecture', imageUrl: 'https://images.unsplash.com/photo-1468413253725-0d5181091126?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=650', category: 'Travel', width: 400, height: 650 },
   { id: 29, title: 'Iceland Northern Lights', imageUrl: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=600', category: 'Travel', width: 400, height: 600 },
   { id: 30, title: 'Dubai Desert Safari', imageUrl: 'https://images.unsplash.com/photo-1529260830199-42c24126f198?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=500', category: 'Travel', width: 400, height: 500 },
@@ -290,21 +307,28 @@ function PinCard({ pin, savedPins, onToggleSave }: { pin: any; savedPins: number
       >
         {/* Image */}
         <div className="relative overflow-hidden rounded-2xl">
-          <img
-            src={pin.imageUrl}
-            alt={pin.title}
-            className={`w-full h-auto object-cover transition-opacity duration-300 rounded-2xl ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-            onLoad={() => setImageLoaded(true)}
-            loading="lazy"
-          />
+        <img
+          src={pin.imageUrl}
+          alt={pin.title}
+          onLoad={() => setImageLoaded(true)}
+          onError={(e) => {
+            setImageLoaded(true);
+            e.currentTarget.src = "https://images.unsplash.com/photo-1529260830199-42c24126f198?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=500";
+          }}
+          className={`w-full h-auto object-cover transition-opacity duration-300 rounded-2xl ${
+            imageLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+          loading="lazy"
+        />
           
           {/* Loading skeleton */}
           {!imageLoaded && (
-            <div 
-              className="absolute inset-0 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-2xl"
-              style={{ aspectRatio: `${pin.width}/${pin.height}` }}
+            <div
+              className="w-full rounded-2xl bg-gray-200 dark:bg-gray-800 animate-pulse"
+              style={{
+                aspectRatio: `${pin.width / pin.height}`,
+                minHeight: '100px',
+              }}
             />
           )}
 
@@ -429,33 +453,36 @@ function Header() {
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center space-x-4">
-          <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-            <svg
-              className="w-5 h-5 text-white"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm0 19c-.9 0-1.6-.7-1.6-1.6V14c0-.9-.7-1.6-1.6-1.6H5.6c-.9 0-1.6-.7-1.6-1.6S4.7 9.2 5.6 9.2h3.2c.9 0 1.6-.7 1.6-1.6V4.4c0-.9.7-1.6 1.6-1.6s1.6.7 1.6 1.6v3.2c0 .9.7 1.6 1.6 1.6h3.2c.9 0 1.6.7 1.6 1.6s-.7 1.6-1.6 1.6h-3.2c-.9 0-1.6.7-1.6 1.6v3.2c0 .9-.7 1.6-1.6 1.6z"/>
-            </svg>
-          </div>
+        <div className="w-8 h-8 bg-red-600 rounded-md flex items-center justify-center">
+          <LeafIcon />
+        </div>
           <span className="font-bold text-xl hidden sm:block text-gray-900 dark:text-white">
             Pinsta
           </span>
         </div>
         
-        {/* Search Bar */}
-        <div className="flex-1 max-w-2xl mx-8">
-          <div className="relative">
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
-              <SearchIcon />
-            </div>
-            <input
-              type="text"
-              placeholder="Search for ideas..."
-              className="w-full h-12 pl-12 pr-4 bg-gray-100 dark:bg-gray-900 border-none rounded-full text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-red-600 focus:outline-none"
-            />
+       {/* Search Bar */}
+      <div className="flex-1 max-w-2xl mx-8">
+        <div className="relative">
+          <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
+            <SearchIcon />
           </div>
+
+          {/* Input for desktop */}
+          <input
+            type="text"
+            placeholder="Search for ideas..."
+            className="hidden md:block w-full h-12 pl-12 pr-4 bg-gray-100 dark:bg-gray-900 border-none rounded-full text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-red-600 focus:outline-none"
+          />
+
+          {/* Input for mobile */}
+          <input
+            type="text"
+            placeholder="Search"
+            className="block md:hidden w-full h-12 pl-12 pr-4 bg-gray-100 dark:bg-gray-900 border-none rounded-full text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-red-600 focus:outline-none"
+          />
         </div>
+      </div>
         
         {/* Actions */}
         <div className="flex items-center space-x-4">
